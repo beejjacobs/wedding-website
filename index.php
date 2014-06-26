@@ -2,12 +2,8 @@
 include('config.php');
 session_start();
 
-//if(isset($_POST['username']) && isset($_POST['password'])) {
 if(isset($_POST['password'])) {
-    //$username = filter_var($_POST['username'], FILTER_SANITIZE_STRING);
     $password = filter_var($_POST['password'], FILTER_SANITIZE_STRING);
-
-    $password = sha1( $password );
     
     /*** connect to database ***/
     try {
@@ -17,28 +13,23 @@ if(isset($_POST['password'])) {
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         /*** prepare the select statement ***/
-        $query = $db->prepare("SELECT user_id, username, password FROM users 
-                    WHERE password = :password");
-        //$query = $db->prepare("SELECT user_id, username, password FROM users 
-        //            WHERE username = :username AND password = :password");
-        //$query->bindParam(':username', $username, PDO::PARAM_STR);
-        $query->bindParam(':password', $password, PDO::PARAM_STR, 40);
+        $query = $db->prepare("SELECT * FROM users WHERE user_id = 3 OR user_id = 4");
         $query->execute();
 
-        /*** check for a result ***/
-        $user_id = $query->fetchColumn();
-		
-        if($user_id == false) {
-            $message = 'Login Failed';
-        } else {
-            $_SESSION['user_id'] = $user_id;
-            
-            if($user_id == "3") {
-                $_SESSION['admin'] = $user_id;
+        $data = $query->fetchAll();
+        
+        foreach($data as $user) {
+            if(password_verify($password, $user['password'])) {
+                $_SESSION['user_id'] = $user['user_id'];
+                
+                if($user['user_id'] == "3") {
+                    $_SESSION['admin'] = $user['user_id'];
+                }
+                $message = 'You are now logged in';
+            } else {
+                $message = 'Login Failed';
             }
-            $message = 'You are now logged in';
         }
-
 
     } catch(Exception $e) {
         /*** if we are here, something has gone wrong with the database ***/
